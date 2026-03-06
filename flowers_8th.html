@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Women's Day — Draw Flowers</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    overflow: hidden;
+    font-family: 'Cormorant Garamond', serif;
+    cursor: crosshair;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px;
+  }
+
+  .title-area {
+    text-align: center;
+    animation: fadeDown 2s ease-out;
+  }
+
+  .title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 6vw, 72px);
+    color: #fff;
+    letter-spacing: 0.05em;
+    text-shadow: 0 0 60px rgba(255, 120, 180, 0.4);
+    line-height: 1.1;
+  }
+
+  .title em {
+    color: #ff6b9d;
+    font-style: italic;
+  }
+
+  .subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(14px, 2.5vw, 24px);
+    color: rgba(255, 200, 220, 0.6);
+    margin-top: 10px;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  .hint {
+    text-align: center;
+    animation: pulse 3s ease-in-out infinite, fadeUp 2s ease-out;
+  }
+
+  .hint span {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(13px, 2vw, 20px);
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .clean-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 20;
+    pointer-events: all;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.5);
+    padding: 10px 22px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 30px;
+    backdrop-filter: blur(10px);
+    transition: all 0.4s ease;
+  }
+
+  .clean-btn:hover {
+    background: rgba(255, 107, 157, 0.15);
+    border-color: rgba(255, 107, 157, 0.4);
+    color: #ff6b9d;
+  }
+
+  .date-badge {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    z-index: 20;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(11px, 1.5vw, 15px);
+    color: rgba(255, 200, 220, 0.4);
+    letter-spacing: 0.1em;
+    border: 1px solid rgba(255, 200, 220, 0.15);
+    padding: 8px 18px;
+    border-radius: 30px;
+  }
+
+  /* Wish panel */
+  .wish-toggle {
+    position: fixed;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 30;
+    background: rgba(255, 107, 157, 0.12);
+    border: 1px solid rgba(255, 107, 157, 0.3);
+    color: #ff6b9d;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .wish-toggle:hover {
+    background: rgba(255, 107, 157, 0.25);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .wish-toggle.active {
+    left: calc(min(380px, 85vw) + 20px);
+  }
+
+  .wish-panel {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: min(380px, 85vw);
+    height: 100%;
+    z-index: 25;
+    background: linear-gradient(160deg, rgba(15, 10, 25, 0.95), rgba(20, 10, 18, 0.97));
+    backdrop-filter: blur(30px);
+    border-right: 1px solid rgba(255, 107, 157, 0.12);
+    transform: translateX(-100%);
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto;
+    padding: 50px 35px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .wish-panel.open {
+    transform: translateX(0);
+  }
+
+  .wish-panel::-webkit-scrollbar { width: 3px; }
+  .wish-panel::-webkit-scrollbar-thumb { background: rgba(255, 107, 157, 0.2); border-radius: 3px; }
+
+  .wish-flower-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    opacity: 0;
+    transform: translateY(15px);
+    animation: wishLineIn 0.8s ease forwards;
+    animation-delay: 0.2s;
+  }
+
+  .wish-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    color: #fff;
+    margin-bottom: 6px;
+    line-height: 1.2;
+    opacity: 0;
+    transform: translateY(15px);
+    animation: wishLineIn 0.8s ease forwards;
+    animation-delay: 0.35s;
+  }
+
+  .wish-heading em {
+    color: #ff6b9d;
+    font-style: italic;
+  }
+
+  .wish-date-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    color: rgba(255, 200, 220, 0.35);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    opacity: 0;
+    transform: translateY(15px);
+    animation: wishLineIn 0.8s ease forwards;
+    animation-delay: 0.45s;
+  }
+
+  .wish-divider {
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255, 107, 157, 0.5), transparent);
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: wishLineIn 0.8s ease forwards;
+    animation-delay: 0.55s;
+  }
+
+  .wish-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    line-height: 1.75;
+    color: rgba(255, 230, 240, 0.75);
+    font-weight: 300;
+    margin-bottom: 18px;
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  .wish-text:nth-child(6) { animation: wishLineIn 0.8s ease forwards; animation-delay: 0.7s; }
+  .wish-text:nth-child(7) { animation: wishLineIn 0.8s ease forwards; animation-delay: 1.0s; }
+  .wish-text:nth-child(8) { animation: wishLineIn 0.8s ease forwards; animation-delay: 1.3s; }
+  .wish-text:nth-child(9) { animation: wishLineIn 0.8s ease forwards; animation-delay: 1.6s; }
+  .wish-text:nth-child(10) { animation: wishLineIn 0.8s ease forwards; animation-delay: 1.9s; }
+  .wish-text:nth-child(11) { animation: wishLineIn 0.8s ease forwards; animation-delay: 2.2s; }
+
+  .wish-text .highlight {
+    color: #ff85b3;
+    font-weight: 400;
+  }
+
+  .wish-text .soft {
+    color: rgba(255, 200, 220, 0.4);
+    font-size: 15px;
+    font-style: italic;
+  }
+
+  .wish-signature {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: rgba(255, 107, 157, 0.6);
+    margin-top: 20px;
+    opacity: 0;
+    transform: translateY(15px);
+    animation: wishLineIn 0.8s ease forwards;
+    animation-delay: 2.5s;
+  }
+
+  .wish-heart-row {
+    margin-top: 14px;
+    font-size: 14px;
+    letter-spacing: 8px;
+    opacity: 0;
+    animation: wishLineIn 0.8s ease forwards;
+    animation-delay: 2.7s;
+  }
+
+  @keyframes wishLineIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="overlay">
+  <div class="title-area">
+    <div class="title">Draw <em>Flowers</em></div>
+    <div class="subtitle">Happy International Women's Day</div>
+  </div>
+  <div class="hint"><span>Click or tap anywhere to grow flowers</span></div>
+</div>
+
+<div class="date-badge">March 8</div>
+
+<!-- Wish panel -->
+<button class="wish-toggle" id="wishToggle">💌</button>
+<div class="wish-panel" id="wishPanel">
+  <div class="wish-flower-icon">🌸</div>
+  <div class="wish-heading">To <em>You</em>,</div>
+  <div class="wish-date-label">March 8 · Women's Day</div>
+  <div class="wish-divider"></div>
+  <p class="wish-text">I'm thankful to have you in my life. You bring warmth to ordinary days and turn small moments into something worth remembering.</p>
+  <p class="wish-text">You make me smile — <span class="highlight">not always, haha</span> — but more often than you probably realize. Even when you drive me a little crazy, I wouldn't trade it for anything.</p>
+  <p class="wish-text">You're stronger than you think, kinder than you know, and more beautiful than any flower on this screen <span class="soft">(and I worked hard on those flowers, so that's saying something)</span>.</p>
+  <p class="wish-text">Thank you for being <span class="highlight">you</span>. For your laughter, your patience, your stubbornness, your heart. All of it.</p>
+  <p class="wish-text">Today is your day — but honestly, every day is a little better because of you.</p>
+  <p class="wish-text">Happy Women's Day 💐</p>
+  <div class="wish-signature">With love ✦</div>
+  <div class="wish-heart-row">♥ ♥ ♥</div>
+</div>
+
+<button class="clean-btn" id="cleanBtn">Clear Garden</button>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const cleanBtn = document.getElementById('cleanBtn');
+
+let W, H, dpr;
+let flowers = [];
+let particles = [];
+let time = 0;
+
+const PALETTES = [
+  // warm pinks/reds
+  ['#ff6b9d','#ff3370','#ff85b3','#ff4d88','#e8456b'],
+  // coral/orange
+  ['#ff7b5c','#ff5733','#ff9a76','#ff6f52','#e84d3a'],
+  // magenta/purple
+  ['#d94dff','#b833e8','#e870ff','#c44ddf','#a333c4'],
+  // soft pink/peach
+  ['#ffb3c6','#ff8fab','#ffc2d1','#ff9db8','#e88ea3'],
+  // violet
+  ['#9b5de5','#7b2cbf','#b47cef','#8843d9','#6a1fb0'],
+  // golden/yellow
+  ['#ffd166','#ffba33','#ffe08a','#ffc44d','#e8a820'],
+];
+
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+window.addEventListener('resize', resize);
+resize();
+
+class Flower {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.birthTime = time;
+    this.growDuration = 60 + Math.random() * 40;
+    this.palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+
+    // stem
+    this.stemHeight = 80 + Math.random() * 180;
+    this.stemCurve = (Math.random() - 0.5) * 60;
+    this.stemWidth = 1.5 + Math.random() * 1.5;
+
+    // flower head
+    this.petalCount = Math.random() < 0.3 ? 4 : (Math.random() < 0.5 ? 5 : 6);
+    this.petalLength = 12 + Math.random() * 22;
+    this.petalWidth = 8 + Math.random() * 14;
+    this.flowerRotation = Math.random() * Math.PI * 2;
+    this.flowerType = Math.floor(Math.random() * 4); // 0=round,1=pointed,2=tulip,3=wild
+
+    // leaves
+    this.leaves = [];
+    const leafCount = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < leafCount; i++) {
+      this.leaves.push({
+        t: 0.2 + Math.random() * 0.5,
+        side: Math.random() < 0.5 ? -1 : 1,
+        length: 15 + Math.random() * 25,
+        angle: 0.3 + Math.random() * 0.6,
+      });
+    }
+
+    // sway
+    this.swayOffset = Math.random() * Math.PI * 2;
+    this.swayAmount = 0.5 + Math.random() * 1.5;
+  }
+
+  getGrowth() {
+    const age = time - this.birthTime;
+    return Math.min(1, age / this.growDuration);
+  }
+
+  getStemPoint(t, growth) {
+    const h = this.stemHeight * growth;
+    const sway = Math.sin(time * 0.02 + this.swayOffset) * this.swayAmount * t;
+    const cx = this.stemCurve * t * t;
+    return {
+      x: this.x + cx + sway,
+      y: this.y - h * t
+    };
+  }
+
+  draw() {
+    const growth = this.getGrowth();
+    if (growth <= 0) return;
+
+    const eased = easeOutBack(growth);
+    const stemGrowth = Math.min(1, growth * 1.3);
+    const flowerGrowth = Math.max(0, (growth - 0.4) / 0.6);
+
+    // Draw stem
+    ctx.beginPath();
+    ctx.strokeStyle = `hsl(${120 + Math.random() * 0.1}, ${50 + Math.random() * 0.1}%, ${28 + Math.random() * 0.1}%)`;
+    ctx.strokeStyle = '#2d6a30';
+    ctx.lineWidth = this.stemWidth;
+    ctx.lineCap = 'round';
+
+    const steps = 30;
+    for (let i = 0; i <= steps; i++) {
+      const t = (i / steps) * stemGrowth;
+      const p = this.getStemPoint(t, 1);
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+
+    // Draw leaves
+    for (const leaf of this.leaves) {
+      if (stemGrowth < leaf.t) continue;
+      const leafGrowth = Math.min(1, (stemGrowth - leaf.t) / 0.3);
+      const p = this.getStemPoint(leaf.t, 1);
+      const len = leaf.length * leafGrowth;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(leaf.side * leaf.angle + Math.sin(time * 0.02 + this.swayOffset) * 0.05);
+      ctx.beginPath();
+      ctx.fillStyle = '#1e5a22';
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(len * 0.5, -len * 0.3 * leaf.side, len, 0);
+      ctx.quadraticCurveTo(len * 0.5, len * 0.3 * leaf.side, 0, 0);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Draw flower head
+    if (flowerGrowth > 0) {
+      const tip = this.getStemPoint(stemGrowth, 1);
+      const fg = easeOutBack(Math.min(1, flowerGrowth));
+
+      ctx.save();
+      ctx.translate(tip.x, tip.y);
+      ctx.rotate(this.flowerRotation + Math.sin(time * 0.015 + this.swayOffset) * 0.08);
+      ctx.scale(fg, fg);
+
+      if (this.flowerType === 2) {
+        // Tulip style
+        this.drawTulip(fg);
+      } else if (this.flowerType === 3) {
+        // Wild/poppy style
+        this.drawPoppy(fg);
+      } else {
+        // Standard petals
+        this.drawStandardPetals(fg);
+      }
+
+      ctx.restore();
+    }
+  }
+
+  drawStandardPetals(fg) {
+    const c = this.palette;
+    for (let i = 0; i < this.petalCount; i++) {
+      const angle = (i / this.petalCount) * Math.PI * 2;
+      ctx.save();
+      ctx.rotate(angle);
+
+      const grad = ctx.createRadialGradient(0, -this.petalLength * 0.5, 0, 0, -this.petalLength * 0.5, this.petalLength);
+      grad.addColorStop(0, c[0]);
+      grad.addColorStop(0.5, c[1]);
+      grad.addColorStop(1, c[2] + '80');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      if (this.flowerType === 1) {
+        // pointed petals
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-this.petalWidth * 0.5, -this.petalLength * 0.3,
+                          -this.petalWidth * 0.3, -this.petalLength * 0.8,
+                          0, -this.petalLength);
+        ctx.bezierCurveTo(this.petalWidth * 0.3, -this.petalLength * 0.8,
+                          this.petalWidth * 0.5, -this.petalLength * 0.3,
+                          0, 0);
+      } else {
+        // round petals
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-this.petalWidth * 0.7, -this.petalLength * 0.3,
+                          -this.petalWidth * 0.7, -this.petalLength * 0.9,
+                          0, -this.petalLength);
+        ctx.bezierCurveTo(this.petalWidth * 0.7, -this.petalLength * 0.9,
+                          this.petalWidth * 0.7, -this.petalLength * 0.3,
+                          0, 0);
+      }
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // center
+    const centerGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.petalLength * 0.25);
+    centerGrad.addColorStop(0, '#ffe066');
+    centerGrad.addColorStop(0.6, '#ffcc00');
+    centerGrad.addColorStop(1, '#cc8800');
+    ctx.fillStyle = centerGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.petalLength * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawTulip(fg) {
+    const c = this.palette;
+    for (let i = -1; i <= 1; i++) {
+      ctx.save();
+      ctx.rotate(i * 0.35);
+      const grad = ctx.createLinearGradient(0, 0, 0, -this.petalLength * 1.3);
+      grad.addColorStop(0, c[3] || c[0]);
+      grad.addColorStop(0.5, c[0]);
+      grad.addColorStop(1, c[1]);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, 2);
+      ctx.bezierCurveTo(-this.petalWidth * 0.6, -this.petalLength * 0.2,
+                        -this.petalWidth * 0.5, -this.petalLength * 1.0,
+                        0, -this.petalLength * 1.3);
+      ctx.bezierCurveTo(this.petalWidth * 0.5, -this.petalLength * 1.0,
+                        this.petalWidth * 0.6, -this.petalLength * 0.2,
+                        0, 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  drawPoppy(fg) {
+    const c = this.palette;
+    const petals = 5 + Math.floor(Math.random() * 0.01); // consistent per frame
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2 + Math.sin(time * 0.01) * 0.02;
+      ctx.save();
+      ctx.rotate(angle);
+
+      const grad = ctx.createRadialGradient(0, -this.petalLength * 0.4, 2, 0, -this.petalLength * 0.5, this.petalLength * 0.8);
+      grad.addColorStop(0, c[0]);
+      grad.addColorStop(0.4, c[1]);
+      grad.addColorStop(1, c[2] + 'aa');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(-this.petalWidth * 0.9, -this.petalLength * 0.2,
+                        -this.petalWidth * 1.0, -this.petalLength * 0.9,
+                        0, -this.petalLength * 1.1);
+      ctx.bezierCurveTo(this.petalWidth * 1.0, -this.petalLength * 0.9,
+                        this.petalWidth * 0.9, -this.petalLength * 0.2,
+                        0, 0);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // dark center
+    const cg = ctx.createRadialGradient(0, 0, 0, 0, 0, this.petalLength * 0.22);
+    cg.addColorStop(0, '#1a0a00');
+    cg.addColorStop(0.7, '#331100');
+    cg.addColorStop(1, c[4] || c[0]);
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.petalLength * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // pollen dots
+    ctx.fillStyle = '#ffe066';
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const r = this.petalLength * 0.12;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * r, Math.sin(a) * r, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+class Particle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.vx = (Math.random() - 0.5) * 3;
+    this.vy = -Math.random() * 3 - 1;
+    this.life = 1;
+    this.decay = 0.01 + Math.random() * 0.02;
+    this.size = 1 + Math.random() * 3;
+    this.color = ['#ff6b9d', '#ffb3c6', '#ffd166', '#d94dff', '#ff7b5c'][Math.floor(Math.random() * 5)];
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += 0.02;
+    this.life -= this.decay;
+  }
+
+  draw() {
+    if (this.life <= 0) return;
+    ctx.globalAlpha = this.life * 0.6;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function easeOutBack(t) {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+}
+
+function spawnFlower(x, y) {
+  flowers.push(new Flower(x, y));
+
+  // spawn particles
+  for (let i = 0; i < 12; i++) {
+    particles.push(new Particle(x, y));
+  }
+}
+
+// Ground / grass
+function drawGround() {
+  const grad = ctx.createLinearGradient(0, H - 50, 0, H);
+  grad.addColorStop(0, 'transparent');
+  grad.addColorStop(1, 'rgba(20, 60, 20, 0.15)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, H - 50, W, 50);
+}
+
+// Ambient floating particles
+let ambientParticles = [];
+function initAmbient() {
+  for (let i = 0; i < 30; i++) {
+    ambientParticles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      size: 0.5 + Math.random() * 2,
+      speed: 0.1 + Math.random() * 0.3,
+      opacity: 0.1 + Math.random() * 0.2,
+      offset: Math.random() * Math.PI * 2,
+    });
+  }
+}
+initAmbient();
+
+function drawAmbient() {
+  for (const p of ambientParticles) {
+    p.y -= p.speed;
+    p.x += Math.sin(time * 0.01 + p.offset) * 0.3;
+    if (p.y < -10) { p.y = H + 10; p.x = Math.random() * W; }
+
+    ctx.globalAlpha = p.opacity;
+    ctx.fillStyle = '#ffcce0';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// Vignette
+function drawVignette() {
+  const grad = ctx.createRadialGradient(W / 2, H / 2, W * 0.2, W / 2, H / 2, W * 0.8);
+  grad.addColorStop(0, 'transparent');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function animate() {
+  time++;
+
+  // dark bg with subtle gradient
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0a0a12');
+  bg.addColorStop(0.5, '#0d0a15');
+  bg.addColorStop(1, '#0a0f0a');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  drawAmbient();
+  drawGround();
+
+  // Draw flowers
+  for (const f of flowers) {
+    f.draw();
+  }
+
+  // Update & draw particles
+  particles = particles.filter(p => p.life > 0);
+  for (const p of particles) {
+    p.update();
+    p.draw();
+  }
+
+  drawVignette();
+
+  requestAnimationFrame(animate);
+}
+
+// Events
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  spawnFlower(x, y);
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  for (const touch of e.touches) {
+    const rect = canvas.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    spawnFlower(x, y);
+  }
+}, { passive: false });
+
+// Also allow drag/move to plant flowers
+let isDown = false;
+let lastPlant = 0;
+canvas.addEventListener('mousedown', () => { isDown = true; });
+canvas.addEventListener('mouseup', () => { isDown = false; });
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDown) return;
+  if (time - lastPlant < 8) return;
+  lastPlant = time;
+  const rect = canvas.getBoundingClientRect();
+  spawnFlower(e.clientX - rect.left, e.clientY - rect.top);
+});
+
+cleanBtn.addEventListener('click', () => {
+  flowers = [];
+  particles = [];
+});
+
+// Wish panel toggle
+const wishToggle = document.getElementById('wishToggle');
+const wishPanel = document.getElementById('wishPanel');
+let wishOpen = false;
+
+wishToggle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  wishOpen = !wishOpen;
+  wishPanel.classList.toggle('open', wishOpen);
+  wishToggle.classList.toggle('active', wishOpen);
+  wishToggle.textContent = wishOpen ? '✕' : '💌';
+});
+
+// Spawn a few initial flowers as demo
+setTimeout(() => {
+  spawnFlower(W * 0.3, H * 0.7);
+  spawnFlower(W * 0.5, H * 0.65);
+  spawnFlower(W * 0.7, H * 0.72);
+}, 500);
+
+setTimeout(() => {
+  spawnFlower(W * 0.2, H * 0.75);
+  spawnFlower(W * 0.8, H * 0.68);
+}, 1200);
+
+animate();
+</script>
+</body>
+</html>
